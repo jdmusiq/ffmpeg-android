@@ -14,9 +14,8 @@
 #   - Build FFMPEG
 #
 ###############################################################################
-SCRIPT=$(readlink -f $0)
+SCRIPT=$(cd "$(dirname "$0")"; pwd)/$(basename $0)
 BASE=$(dirname $SCRIPT)
-
 ###############################################################################
 #
 # Argument parsing.
@@ -153,7 +152,7 @@ function build_one
   $BASE/src/configure \
       --prefix=$2 \
       --enable-shared \
-      --enable-static \
+      --disable-static \
       --disable-doc \
       --disable-ffmpeg \
       --disable-ffplay \
@@ -162,10 +161,6 @@ function build_one
       --disable-avdevice \
       --disable-doc \
       --enable-symver \
-      --enable-decoder=h264 \
-      --enable-parser=h264 \
-      --enable-decoder=h263 \
-      --enable-runtime-cpudetect \
       --cross-prefix=$3 \
       --target-os=linux \
       --enable-pic \
@@ -191,7 +186,7 @@ NDK=$ANDROID_NDK
 PREFIX=$BASE/install/armeabi
 BUILD_ROOT=$BASE/build/armeabi
 SYSROOT=$NDK/platforms/android-$PLATFORM/arch-arm/
-TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-$HOST_ARCH
+TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-$HOST_ARCH
 CROSS_PREFIX=$TOOLCHAIN/bin/arm-linux-androideabi-
 ARCH=arm
 E_CFLAGS=
@@ -209,7 +204,7 @@ build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
 PREFIX=$BASE/install/armeabi-v7a
 BUILD_ROOT=$BASE/build/armeabi-v7a
 SYSROOT=$NDK/platforms/android-$PLATFORM/arch-arm/
-TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-$HOST_ARCH
+TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-$HOST_ARCH
 CROSS_PREFIX=$TOOLCHAIN/bin/arm-linux-androideabi-
 ARCH=arm
 E_CFLAGS="-march=armv7-a -mfloat-abi=softfp"
@@ -227,7 +222,7 @@ build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
 PREFIX=$BASE/install/x86
 BUILD_ROOT=$BASE/build/x86
 SYSROOT=$NDK/platforms/android-$PLATFORM/arch-x86/
-TOOLCHAIN=$NDK/toolchains/x86-4.8/prebuilt/linux-$HOST_ARCH
+TOOLCHAIN=$NDK/toolchains/x86-4.9/prebuilt/darwin-$HOST_ARCH
 CROSS_PREFIX=$TOOLCHAIN/bin/i686-linux-android-
 ARCH=x86
 E_CFLAGS=
@@ -239,13 +234,31 @@ build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
 
 ###############################################################################
 #
+# x86_64 build configuration
+#
+###############################################################################
+PREFIX=$BASE/install/x86_64
+BUILD_ROOT=$BASE/build/x86_64
+SYSROOT=$NDK/platforms/android-$PLATFORM/arch-x86_64/
+TOOLCHAIN=$NDK/toolchains/x86_64-4.9/prebuilt/darwin-$HOST_ARCH
+CROSS_PREFIX=$TOOLCHAIN/bin/x86_64-linux-android-
+ARCH=x86_64
+E_CFLAGS=
+E_LDFLAGS=
+EXTRA="--disable-asm"
+
+build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
+"$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
+
+###############################################################################
+#
 # MIPS build configuration
 #
 ###############################################################################
 PREFIX=$BASE/install/mips
 BUILD_ROOT=$BASE/build/mips
 SYSROOT=$NDK/platforms/android-$PLATFORM/arch-mips/
-TOOLCHAIN=$NDK/toolchains/mipsel-linux-android-4.8/prebuilt/linux-$HOST_ARCH
+TOOLCHAIN=$NDK/toolchains/mipsel-linux-android-4.9/prebuilt/darwin-$HOST_ARCH
 CROSS_PREFIX=$TOOLCHAIN/bin/mipsel-linux-android-
 ARCH=mips32
 E_CFLAGS=
