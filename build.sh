@@ -5,9 +5,11 @@
 # This script will build FFMPEG for android.
 #
 # Prerequisits:
-#   - FFMPEG source checked out / copied to src subfolder.
+#   - None
 #
 # Build steps:
+#   - Checkout FFMPEG Source and lock to 3.2 Branch (latest version at time
+#     of script creation)
 #   - Patch the FFMPEG configure script to fix missing support for shared
 #     library versioning on android.
 #   - Configure FFMPEG
@@ -92,19 +94,30 @@ if [ -z $ANDROID_NDK ]; then
   echo "ANDROID_NDK not set. Set it to the directory of your NDK installation."
   exit -1
 fi
-if [ ! -d $BASE/src ]; then
-  echo "Please copy or check out FFMPEG source to folder src!"
+if [ ! -d $BASE/FFmpeg ]; then
+  echo "Please copy or check out FFMPEG source to folder: FFmpeg!"
   exit -2
 fi
 
+echo "Refreshing FFMpeg 3.2 Library"
+echo "-----------------------------------------------"
+cd $BASE/FFmpeg
+git checkout release/3.2
+cd ..
+git submodule update --init
+git submodule update --remote
+
+echo "-----------------------------------------------"
 echo "Building with:"
+echo "-----------------------------------------------"
 echo "HOST_ARCH=$HOST_ARCH"
 echo "PLATFORM=$PLATFORM"
 echo "MAKE_OPTS=$MAKE_OPTS"
 echo "ANDROID_NDK=$ANDROID_NDK"
 echo "64-BIT ARCHES: $ALL"
+echo "-----------------------------------------------"
 
-cd $BASE/src
+cd $BASE/FFmpeg
 
 # Save original configuration file
 # or restore original before applying patches.
@@ -158,7 +171,7 @@ function build_one
   mkdir -p $1
   cd $1
 
-  $BASE/src/configure \
+  $BASE/FFmpeg/configure \
       --prefix=$2 \
       --enable-shared \
       --disable-static \
@@ -178,14 +191,15 @@ function build_one
       --sysroot=$5 \
       --extra-cflags="-Os $6" \
       --extra-ldflags="$7" \
-      $8
+      $8 > ../install.log 2>&1
 
-  make clean
-  make $MAKE_OPTS
-  make install
+  make clean > ../install.log 2>&1
+  make $MAKE_OPTS > ../install.log 2>&1
+  make install > ../install.log 2>&1
 }
 
 NDK=$ANDROID_NDK
+touch ../install.log
 
 
 ###############################################################################
@@ -193,6 +207,8 @@ NDK=$ANDROID_NDK
 # ARM build configuration
 #
 ###############################################################################
+echo "Building: ARM"
+echo "Building: ARM" > install.log
 PREFIX=$BASE/install/armeabi
 BUILD_ROOT=$BASE/build/armeabi
 SYSROOT=$NDK/platforms/android-$PLATFORM/arch-arm/
@@ -205,7 +221,7 @@ EXTRA=
 
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
     "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
-
+exit 1
 ###############################################################################
 #
 # ARM-v7a build configuration
@@ -252,10 +268,14 @@ BUILD_ROOT=$BASE/build/mips
 SYSROOT=$NDK/platforms/android-$PLATFORM/arch-mips/
 TOOLCHAIN=$NDK/toolchains/mipsel-linux-android-4.9/prebuilt/darwin-$HOST_ARCH
 CROSS_PREFIX=$TOOLCHAIN/bin/mipsel-linux-android-
-ARCH=mips32
-E_CFLAGS=
+ARCH=mips
+E_CFLAGS="-fno-strict-aliasing -fmessage-length=0 -fno-inline-functions-called-once -frerun-cse-after-loop -frename-registers"
 E_LDFLAGS=
-EXTRA=""
+EXTRA="--cpu=mips32r2 \
+--enable-runtime-cpudetect \
+--enable-yasm \
+--disable-mipsfpu \
+--disable-mipsdspr2"
 
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
     "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
@@ -311,9 +331,16 @@ SYSROOT=$NDK/platforms/android-$PLATFORM/arch-mips64/
 TOOLCHAIN=$NDK/toolchains/mips64el-linux-android-4.9/prebuilt/darwin-$HOST_ARCH
 CROSS_PREFIX=$TOOLCHAIN/bin/mips64el-linux-android-
 ARCH=mips64
-E_CFLAGS=
+E_CFLAGS="-fno-strict-aliasing -fmessage-length=0 -fno-inline-functions-called-once -frerun-cse-after-loop -frename-registers"
 E_LDFLAGS=
-EXTRA=""
+EXTRA="--cpu=mips64r6 \
+--enable-runtime-cpudetect \
+--enable-yasm \
+--disable-asm \
+--disable-mipsfpu \
+--disable-mipsdsp \
+--disable-mipsdspr2"
+
 if [ "$ALL" == "YES" ]; then
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
 "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
