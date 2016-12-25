@@ -1,13 +1,12 @@
 ffmpeg-android-macosx
 ==============
 
-Build scripts to create shared libraries of FFMPEG for android apps on MacOS X including platform 21+ 64 bit support. Additional Audio-decoding-only script included for specific app purposes.
+Build scripts to create shared libraries of FFMPEG 3.2 for android apps on MacOS X including platform 21+ 64 bit support. Additional Audio-decoding-only script included for specific app purposes.
 
 building
 ========
 
 Building is straight forward.
- - Place the FFMPEG source code in the folder "src"
  - execute ./build.sh found in the top level directory.
 
 ./build.sh -? will print out which command line arguments are supported.
@@ -25,4 +24,4 @@ All code was originally forked from [akallabeth/ffmpeg-android](https://github.c
 
 Known Bugs
 ====
-Currently mips and mips64 are not compiling.
+None
