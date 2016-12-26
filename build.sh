@@ -29,7 +29,7 @@ if [ -z $HOST_ARCH]; then
 fi
 
 if [ -z $PLATFORM ]; then
-  PLATFORM=9
+  PLATFORM=21
 fi
 
 if [ -z $MAKE_OPTS ]; then
@@ -42,7 +42,7 @@ fi
 
 function usage
 {
-  echo "$0 [-a <ndk>] [-h <host arch>] [-m <make opts>] [-p <android platform>] [-v y]"
+  echo "$0 [-a <ndk>] [-h <host arch>] [-m <make opts>] [-p <android platform>] [-v]"
   echo -e "\tdefaults:"
   echo -e "\t-h\tHOST_ARCH=$HOST_ARCH"
   echo -e "\t-p\tPLATFORM=$PLATFORM"
@@ -99,13 +99,18 @@ if [ ! -d $BASE/FFmpeg ]; then
   exit -2
 fi
 
+touch $BASE/install.log
+echo "*** ffmpeg-android-macosx ***"
+echo "Beginning Build"
+echo "-----------------------------------------------"
+
 echo "Refreshing FFMpeg 3.2 Library"
 echo "-----------------------------------------------"
 cd $BASE/FFmpeg
-git checkout release/3.2
+git checkout release/3.2 > $BASE/install.log 2>&1
 cd ..
-git submodule update --init
-git submodule update --remote
+git submodule update --init > $BASE/install.log 2>&1
+git submodule update --remote > $BASE/install.log 2>&1
 
 echo "-----------------------------------------------"
 echo "Building with:"
@@ -117,29 +122,52 @@ echo "ANDROID_NDK=$ANDROID_NDK"
 echo "64-BIT ARCHES: $ALL"
 echo "-----------------------------------------------"
 
+echo "-----------------------------------------------" > $BASE/install.log 2>&1
+echo "Building with:"  > $BASE/install.log 2>&1
+echo "-----------------------------------------------" > $BASE/install.log 2>&1
+echo "HOST_ARCH=$HOST_ARCH" > $BASE/install.log 2>&1
+echo "PLATFORM=$PLATFORM" > $BASE/install.log 2>&1
+echo "MAKE_OPTS=$MAKE_OPTS" > $BASE/install.log 2>&1
+echo "ANDROID_NDK=$ANDROID_NDK" > $BASE/install.log 2>&1
+echo "64-BIT ARCHES: $ALL" > $BASE/install.log 2>&1
+echo "-----------------------------------------------" > $BASE/install.log 2>&1
+
+
+echo "Applying Config Patches"
+echo "-----------------------------------------------"
+
+echo "Applying Config Patches" > $BASE/install.log 2>&1
+echo "-----------------------------------------------" > $BASE/install.log 2>&1
+
 cd $BASE/FFmpeg
 
 # Save original configuration file
 # or restore original before applying patches.
 if [ ! -f configure.bak ]; then
-  echo "Saving original configure file to configure.bak"
-  cp configure configure.bak
+  echo "Saving original configure file to configure.bak" > $BASE/install.log 2>&1
+  cp configure configure.bak > $BASE/install.log 2>&1
 else
-  echo "Restoring original configure file from configure.bak"
-  cp configure.bak configure
+  echo "Restoring original configure file from configure.bak" > $BASE/install.log 2>&1
+  cp configure.bak configure > $BASE/install.log 2>&1
 fi
 
-patch -p1 < $BASE/patches/config.patch
+patch -p1 < $BASE/patches/config.patch > $BASE/install.log 2>&1
 
 if [ ! -f library.mak.bak ]; then
-  echo "Saving original library.mak file to library.mak.bak"
-  cp library.mak library.mak.bak
+  echo "Saving original library.mak file to library.mak.bak" > $BASE/install.log 2>&1
+  cp library.mak library.mak.bak > $BASE/install.log 2>&1
 else
-  echo "Restoring original library.mak file from library.mak.bak"
-  cp library.mak.bak library.mak
+  echo "Restoring original library.mak file from library.mak.bak" > $BASE/install.log 2>&1
+  cp library.mak.bak library.mak > $BASE/install.log 2>&1
 fi
 
-patch -p1 < $BASE/patches/library.mak.patch
+patch -p1 < $BASE/patches/library.mak.patch > $BASE/install.log 2>&1
+
+echo "Removing old build data"
+echo "-----------------------------------------------"
+
+echo "Removing old build data" > $BASE/install.log 2>&1
+echo "-----------------------------------------------" > $BASE/install.log 2>&1
 
 # Remove old build and installation files.
 if [ -d $BASE/install ]; then
@@ -193,13 +221,12 @@ function build_one
       --extra-ldflags="$7" \
       $8 > ../install.log 2>&1
 
-  make clean > ../install.log 2>&1
-  make $MAKE_OPTS > ../install.log 2>&1
-  make install > ../install.log 2>&1
+  make clean > $BASE/install.log 2>&1
+  make $MAKE_OPTS > $BASE/install.log 2>&1
+  make install > $BASE/install.log 2>&1
 }
 
 NDK=$ANDROID_NDK
-touch ../install.log
 
 
 ###############################################################################
@@ -207,8 +234,6 @@ touch ../install.log
 # ARM build configuration
 #
 ###############################################################################
-echo "Building: ARM"
-echo "Building: ARM" > install.log
 PREFIX=$BASE/install/armeabi
 BUILD_ROOT=$BASE/build/armeabi
 SYSROOT=$NDK/platforms/android-$PLATFORM/arch-arm/
@@ -219,9 +244,14 @@ E_CFLAGS=
 E_LDFLAGS=
 EXTRA=
 
+echo "Building: ARM"
+echo "Building: ARM" > install.log
+
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
     "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
-exit 1
+
+echo "-----------------------------------------------"
+
 ###############################################################################
 #
 # ARM-v7a build configuration
@@ -237,8 +267,13 @@ E_CFLAGS="-march=armv7-a -mfloat-abi=softfp"
 E_LDFLAGS=
 EXTRA=
 
+echo "Building: ARM-v7a"
+echo "Building: ARM-v7a" > install.log
+
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
     "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
+
+echo "-----------------------------------------------"
 
 ###############################################################################
 #
@@ -255,8 +290,13 @@ E_CFLAGS=
 E_LDFLAGS=
 EXTRA="--disable-asm"
 
+echo "Building: x86"
+echo "Building: x86" > install.log
+
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
     "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
+
+echo "-----------------------------------------------"
 
 ###############################################################################
 #
@@ -277,8 +317,13 @@ EXTRA="--cpu=mips32r2 \
 --disable-mipsfpu \
 --disable-mipsdspr2"
 
+echo "Building: MIPS"
+echo "Building: MIPS" > install.log
+
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
     "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
+
+echo "-----------------------------------------------"
 
 ###############################################################################
 #
@@ -296,8 +341,11 @@ E_LDFLAGS=
 EXTRA=
 
 if [ "$ALL" == "YES" ]; then
+echo "Building: ARM64-v8a"
+echo "Building: ARM64-v8a" > install.log
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
 "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
+echo "-----------------------------------------------"
 fi
 
 ###############################################################################
@@ -316,8 +364,11 @@ E_LDFLAGS=
 EXTRA="--disable-asm"
 
 if [ "$ALL" == "YES" ]; then
+echo "Building: x86_64"
+echo "Building: x86_64" > install.log
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
 "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
+echo "-----------------------------------------------"
 fi
 
 ###############################################################################
@@ -342,6 +393,9 @@ EXTRA="--cpu=mips64r6 \
 --disable-mipsdspr2"
 
 if [ "$ALL" == "YES" ]; then
+echo "Building: MIPS_64"
+echo "Building: MIPS_64" > install.log
 build_one "$BUILD_ROOT" "$PREFIX" "$CROSS_PREFIX" "$ARCH" "$SYSROOT" \
 "$E_CFLAGS" "$E_LDFLAGS" "$EXTRA"
+echo "-----------------------------------------------"
 fi
