@@ -108,6 +108,7 @@ echo "Refreshing FFMpeg 3.2 Library"
 echo "-----------------------------------------------"
 cd $BASE/FFmpeg
 git checkout release/3.2 > $BASE/install.log 2>&1
+git pull > $BASE/install.log 2>&1
 cd ..
 git submodule update --init > $BASE/install.log 2>&1
 git submodule update --remote > $BASE/install.log 2>&1
